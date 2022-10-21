@@ -1,0 +1,9 @@
+$file = Read-Host "Please enter the full path to file"
+$var= Format-Hex  -Path "$file" | select-object -first 1
+$var2= $var | Select-String -Pattern '..'
+$var2=$var2.ToString()
+$var3=$var2.Substring(11,11)
+$var3.Split(" ") | forEach {[char]([convert]::toint16($_,16))} | forEach {$result = $result + $_}
+$result1=$result
+$result=""
+$result1
