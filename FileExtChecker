@@ -7,14 +7,3 @@ $var3.Split(" ") | forEach {[char]([convert]::toint16($_,16))} | forEach {$resul
 $result1=$result
 $result=""
 $result1
-
--------- Rough Codes ------
-
-$var3.Split(" ") | forEach {[char]([convert]::toint16($_,16))} | forEach {$result = $result + $_}
-$result
-
-$var2 -match " (?<content>.*)..."
-$matches['content']
-
-$var2 -match " [A-Z](?<content>.*)..."
-$var2.GetType()
