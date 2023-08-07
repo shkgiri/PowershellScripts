@@ -18,3 +18,121 @@ $matches['content']
 
 $var2 -match " [A-Z](?<content>.*)..."
 $var2.GetType()
+
+
+----------Work One - with Reference from other github repo -------
+
+'--------------------------------
+' Split a file into smaller chunks
+' 20161130
+' CmdLine: {this-script} {path to big file} {size in MB} {output}
+' To use with cli: cscript {this-script} {path to big file} {size in KB} {output}
+'--------------------------------
+LF = Chr(10)
+Dim oFSO, FullName, Path, Name, Size, TargetDir, Filename
+Set oFSO = CreateObject("Scripting.FileSystemObject")
+
+WScript.Echo " *** Split file *** "
+
+Process_CmdParams
+Split
+Guide_Join
+'-----------------------------------
+'Process the command line parameters
+'-----------------------------------
+Sub Process_CmdParams
+  Dim oArgs
+  Set oArgs = WScript.Arguments
+  If oArgs.Count <> 3 Then Error _
+  ("Incorrect number of parameters." & LF & LF _
+  & "USAGE: {this-script} {big-file-path} {size} {output}" & LF _
+  & "        * size in MB") & LF _
+  & LF _
+  & " ... to run in cli: cscript {this-script} {big-file-path} {size} {output}"
+  
+  FullName = oArgs(0)
+  Path = oFSO.GetParentFolderName(oArgs(0))
+  'Name = oFSO.GetBaseName(oArgs(0)) & "."
+  Name = oFSO.GetFileName(oArgs(0)) & "."
+  Filename = oFSO.GetFileName(oArgs(0))
+  Size = 1024 * 1024 * oArgs(1)
+  'TargetDir = Left(oArgs(2),1) & ":\"
+  TargetDir = oArgs(2) & "\"
+  
+  Info (" ==> Splitting " & FullName & " by " & Size & "B files and save to " & TargetDir)
+  'Error (" ==> Splitting " & FullName & " by " & oArgs(1) & "MB and save to " & TargetDir)
+End Sub
+
+'--------------
+'Split the file
+'--------------
+Sub Split
+  Dim iFile, oFile, iStream, Data
+  Dim Ext, e, offset, length, NewName
+  
+  if not oFSO.FileExists(FullName) then Error _
+  ("Cannot locate the file """ & FullName & """")
+  Set iFile = oFSO.GetFile(FullName)
+  
+  On Error Resume Next
+  Set iStream = iFile.OpenAsTextStream(1)
+
+  if err.number > 0 then Error("Cannot open the file """ & FullName _
+  & """" & LF & Err.Description)
+
+  On Error Goto 0
+  Data = iStream.Read(iFile.Size)
+  iStream.close
+  
+  Ext = 0
+  offset = 1
+  
+  ' Clean old files
+  On Error Resume Next
+  oFSO.DeleteFile(TargetDir & Name & ".*"), TRUE
+  Info "Cleaned old files of " & Name & " in " & TargetDir
+  
+  Do
+    Ext = Right("00" & Ext + 1, 3)
+    if ext > "999" then Error ("Too many files - maximum is 999!")
+    
+    NewName = TargetDir & Name & Ext
+    Info "Writing """ & NewName & """"
+
+    On Error Resume Next
+  
+    ' ---> Write file
+    Set oFile = oFSO.CreateTextFile(NewName, 2)
+
+    if err.number > 0 then Error("Cannot open the file """ _
+    & NewName & """" & LF & Err.Description)
+    On Error Goto 0
+    
+    length = Size
+    If length > Len(data)+1 - offset Then length = Len(data) + 1 - offset
+    
+    oFile.Write Mid(Data, offset, length)
+    offset = offset + length
+    oFile.Close
+  Loop Until offset >= Len(data)
+End Sub
+
+'----------
+'Error exit
+'----------
+Sub Error (Message)
+  WScript.Echo Message
+  WScript.Quit
+End Sub
+
+Sub Info (Message)
+  WScript.Echo Message
+End Sub
+
+Sub Guide_Join
+  WScript.Echo "------------"
+  WScript.Echo "To join: "
+  WScript.Echo ("copy /b " & TargetDir & Name & "* " & Filename & LF)
+  WScript.Echo "--------------------------------------------------------------"
+  WScript.Quit
+End Sub
